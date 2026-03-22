@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import {jwtDecode} from 'jwt-decode';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -10,6 +12,8 @@ export default function Signup() {
     phone: '',
     username: '',
     password: '',
+    location: '',
+    birthdate: '',
   });
 
   const [error, setError] = useState('');
@@ -22,7 +26,7 @@ export default function Signup() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Very basic validation
+    
     if (Object.values(form).some(value => !value.trim())) {
       setError('Please fill in all fields');
       return;
@@ -61,10 +65,10 @@ export default function Signup() {
           onChange={handleChange}
         />
         <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
+          name="birthdate"
+          type="birthdate"
+          placeholder="Birth date"
+          value={form.birthdate}
           onChange={handleChange}
         />
         <input
@@ -93,7 +97,14 @@ export default function Signup() {
           value={form.password}
           onChange={handleChange}
         />
+<GoogleLogin
+  onSuccess={(credentialResponse) => {
+    const decoded = jwt_decode(credentialResponse.credential);
+    console.log(decoded);
 
+    localStorage.setItem("user", JSON.stringify(decoded));
+  }}
+/>
         <button type="submit">Create Account</button>
       </form>
 

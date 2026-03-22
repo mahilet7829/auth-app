@@ -6,7 +6,7 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background: #f4f6f9;
+  background: rgb(6, 27, 58);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -39,7 +39,7 @@ form {
 input {
   padding: 0.9rem;
   font-size: 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgb(14, 30, 54);
   border-radius: 6px;
   outline: none;
 }
@@ -52,7 +52,7 @@ input:focus {
 button {
   padding: 0.95rem;
   font-size: 1.05rem;
-  background: #2563eb;
+  background: rgb(6, 28, 77);
   color: white;
   border: none;
   border-radius: 6px;

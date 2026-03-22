@@ -10,7 +10,8 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    const [attempts, setAttempts] = useState(0);
+    console.log("Entered password:", password);
     const savedUser = JSON.parse(localStorage.getItem('user'));
 
     if (!savedUser) {
@@ -23,13 +24,21 @@ export default function Login() {
        identifier === savedUser.email ||
        identifier === savedUser.phone) &&
       password === savedUser.password;
-
+    if (attempts >= 3) {
+  setError("Too many failed attempts. Please reset your password.");
+  return;
+}
     if (match) {
-      // In real app → set auth token / context / redux / zustand etc.
-      navigate('/welcome');
-    } else {
-      setError('Incorrect credentials');
+      const newAttempts = attempts + 1;
+setAttempts(newAttempts);
+localStorage.setItem("attempts", newAttempts);
     }
+    else {
+  setAttempts(attempts + 1);
+  console.log("Failed attempts:", attempts + 1);
+
+  setError(`Incorrect credentials. Attempts: ${attempts + 1}`);
+}
   };
 
   return (
