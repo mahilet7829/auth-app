@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  fullname      String
+  username      String    @unique
+  email         String    @unique
+  phoneNumber   String?
+  countryCode   String    @default("+251")
+  location      String?
+  birthdate     DateTime?
+  password      String
+  googleId      String?
+  picture       String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  
+  favorites     Favorite[]
+  bookings      Booking[]
+}
+
+model Destination {
+  id            String    @id @default(cuid())
+  name          String
+  location      String
+  region        String
+  category      String
+  description   String
+  price         String
+  priceLevel    String    @default("$$")
+  rating        Float     @default(4.5)
+  bestTime      String    @default("All year round")
+  duration      String    @default("2-3 days")
+  images        String    // Store as JSON string
+  activities    String    // Store as JSON string
+  availableSeats Int      @default(20)
+  createdAt     DateTime  @default(now())
+  
+  favorites     Favorite[]
+  bookings      Booking[]
+}
+
+model Booking {
+  id              String    @id @default(cuid())
+  userId          String
+  destinationId   String
+  checkInDate     DateTime
+  checkOutDate    DateTime
+  numberOfTravelers Int
+  totalPrice      Float
+  specialRequests String?
+  status          String    @default("confirmed")
+  bookingDate     DateTime  @default(now())
+  
+  user            User      @relation(fields: [userId], references: [id])
+  destination     Destination @relation(fields: [destinationId], references: [id])
+}
+
+model Favorite {
+  id            String    @id @default(cuid())
+  userId        String
+  destinationId String
+  
+  user          User      @relation(fields: [userId], references: [id])
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  
+  @@unique([userId, destinationId])
+}
