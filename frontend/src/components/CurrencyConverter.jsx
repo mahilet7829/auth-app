@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import AnimatedGraphics from './AnimatedGraphics';
 
 export default function CurrencyConverter() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, loading } = useAuth();
   const [amount, setAmount] = useState(1);
   const [fromCurrency, setFromCurrency] = useState('USD');
   const [toCurrency, setToCurrency] = useState('ETB');
@@ -39,12 +40,12 @@ export default function CurrencyConverter() {
     { code: 'UGX', name: 'Ugandan Shilling', symbol: 'USh', flag: '🇺🇬' },
   ];
 
+  // Check authentication
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (!token || !userData) navigate('/login');
-    setUser(JSON.parse(userData));
-  }, [navigate]);
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     if (rates[fromCurrency] && rates[toCurrency]) {
@@ -66,6 +67,22 @@ export default function CurrencyConverter() {
     navigate('/login');
   };
 
+  if (loading) {
+    return (
+      <div className="currency-page">
+        <AnimatedGraphics />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="currency-page">
       <AnimatedGraphics />
@@ -76,7 +93,7 @@ export default function CurrencyConverter() {
           <span className="brand-name">Ethiopia Travel Guide</span>
         </div>
         <div className="nav-links">
-          <Link to="/welcome" className="nav-link">Dashboard</Link>
+          <Link to="/dashboard" className="nav-link">Dashboard</Link>
           <Link to="/tourist" className="nav-link">Destinations</Link>
           <Link to="/wishlist" className="nav-link">❤️ Wishlist</Link>
           <Link to="/translator" className="nav-link">🗣️ Translator</Link>
@@ -568,6 +585,33 @@ export default function CurrencyConverter() {
           padding: 15px;
           text-align: center;
           color: white;
+        }
+        
+        .loading-container {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 20px;
+        }
+        
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top-color: #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+          color: white;
+          font-size: 16px;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
         
         @media (max-width: 768px) {

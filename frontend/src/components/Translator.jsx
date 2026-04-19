@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import AnimatedGraphics from './AnimatedGraphics';
 
 export default function Translator() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, loading } = useAuth();
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [sourceLang, setSourceLang] = useState('en');
@@ -13,11 +14,10 @@ export default function Translator() {
   const [activeTab, setActiveTab] = useState('translator');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (!token || !userData) navigate('/login');
-    setUser(JSON.parse(userData));
-  }, [navigate]);
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
 
   const translateText = async () => {
     if (!inputText.trim()) return;
@@ -68,6 +68,20 @@ export default function Translator() {
     navigate('/login');
   };
 
+  if (loading) {
+    return (
+      <div className="translator-page">
+        <AnimatedGraphics />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Translator...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <div className="translator-page">
       <AnimatedGraphics />
@@ -78,38 +92,43 @@ export default function Translator() {
           <span className="brand-name">Ethiopia Travel Guide</span>
         </div>
         <div className="nav-links">
-          <Link to="/welcome" className="nav-link">Dashboard</Link>
-          <Link to="/tourist" className="nav-link">Destinations</Link>
+          <Link to="/dashboard" className="nav-link">📊 Dashboard</Link>
+          <Link to="/tourist" className="nav-link">🏔️ Destinations</Link>
           <Link to="/wishlist" className="nav-link">❤️ Wishlist</Link>
           <Link to="/currency" className="nav-link">💰 Currency</Link>
-          <button onClick={handleLogout} className="logout-btn">Logout</button>
+          <button onClick={handleLogout} className="logout-btn">🚪 Logout</button>
         </div>
       </nav>
 
+      {/* Hero Section */}
       <div className="translator-hero">
-        <h1 className="translator-title">🗣️ Language Translator</h1>
-        <p className="translator-subtitle">Translate between English and Ethiopian languages</p>
+        <h1 className="hero-title">🗣️ Language Translator</h1>
+        <p className="hero-subtitle">Translate between English and Ethiopian languages instantly</p>
       </div>
 
+      {/* Main Content */}
       <div className="translator-container">
-        <div className="translator-tabs">
-          <button 
-            className={`tab-btn ${activeTab === 'translator' ? 'active' : ''}`} 
+        {/* Tabs */}
+        <div className="tabs-container">
+          <button
+            className={`tab-btn ${activeTab === 'translator' ? 'active' : ''}`}
             onClick={() => setActiveTab('translator')}
           >
             🔄 Translator
           </button>
-          <button 
-            className={`tab-btn ${activeTab === 'phrases' ? 'active' : ''}`} 
+          <button
+            className={`tab-btn ${activeTab === 'phrases' ? 'active' : ''}`}
             onClick={() => setActiveTab('phrases')}
           >
             📚 Common Phrases
           </button>
         </div>
 
+        {/* Translator Tab */}
         {activeTab === 'translator' && (
           <div className="translator-card">
-            <div className="language-row">
+            {/* Language Selection */}
+            <div className="language-section">
               <div className="language-box">
                 <label>From</label>
                 <div className="language-select">
@@ -122,7 +141,9 @@ export default function Translator() {
                 </div>
               </div>
 
-              <button onClick={swapLanguages} className="swap-btn">⇄</button>
+              <button onClick={swapLanguages} className="swap-btn" title="Swap Languages">
+                ⇄
+              </button>
 
               <div className="language-box">
                 <label>To</label>
@@ -137,45 +158,56 @@ export default function Translator() {
               </div>
             </div>
 
-            <div className="text-row">
-              <textarea 
-                value={inputText} 
-                onChange={(e) => setInputText(e.target.value)} 
-                placeholder="Enter text to translate..." 
-                className="input-textarea"
-                rows={5}
-              />
-              <div className="output-box">
+            {/* Translation Area */}
+            <div className="translation-area">
+              <div className="input-area">
+                <textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Enter text to translate..."
+                  className="input-textarea"
+                  rows={5}
+                />
+                <div className="char-count">
+                  {inputText.length} characters
+                </div>
+              </div>
+
+              <div className="output-area">
                 {isLoading ? (
                   <div className="loading-dots">
                     <span></span><span></span><span></span>
                   </div>
                 ) : (
-                  translatedText || "Translation will appear here..."
+                  <div className="output-text">
+                    {translatedText || "Translation will appear here..."}
+                  </div>
                 )}
               </div>
             </div>
 
+            {/* Translate Button */}
             <button onClick={translateText} className="translate-btn">
               ✨ Translate Now
             </button>
           </div>
         )}
 
+        {/* Phrases Tab */}
         {activeTab === 'phrases' && (
           <div className="phrases-card">
             <div className="phrases-grid">
               {commonPhrases.map((phrase, idx) => (
-                <div 
-                  key={idx} 
-                  className="phrase-item"
-                  onClick={() => { 
-                    setInputText(phrase.english); 
-                    setTargetLang('am'); 
-                    setTimeout(() => { 
-                      setActiveTab('translator'); 
-                      translateText(); 
-                    }, 100); 
+                <div
+                  key={idx}
+                  className="phrase-card"
+                  onClick={() => {
+                    setInputText(phrase.english);
+                    setTargetLang('am');
+                    setTimeout(() => {
+                      setActiveTab('translator');
+                      translateText();
+                    }, 100);
                   }}
                 >
                   <div className="phrase-english">{phrase.english}</div>
@@ -192,13 +224,12 @@ export default function Translator() {
         .translator-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #0a0a2a 0%, #1a1a3a 50%, #2a1a4a 100%);
-          position: relative;
-          overflow-x: hidden;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
-        
+
+        /* Navbar */
         .translator-navbar {
           background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(20px);
           padding: 15px 40px;
           display: flex;
           justify-content: space-between;
@@ -208,48 +239,45 @@ export default function Translator() {
           z-index: 100;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .nav-brand {
           display: flex;
           align-items: center;
           gap: 10px;
           font-size: 20px;
-          font-weight: bold;
+          font-weight: 600;
           color: white;
         }
-        
-        .brand-icon {
-          font-size: 28px;
-        }
-        
+
+        .brand-icon { font-size: 28px; }
         .brand-name {
           background: linear-gradient(135deg, #fff, #a8b2ff, #667eea);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        
+
         .nav-links {
           display: flex;
-          gap: 20px;
+          gap: 15px;
           align-items: center;
           flex-wrap: wrap;
         }
-        
+
         .nav-link {
           text-decoration: none;
           color: rgba(255, 255, 255, 0.8);
           font-weight: 500;
-          transition: color 0.3s;
           padding: 8px 16px;
           border-radius: 8px;
+          transition: all 0.3s;
         }
-        
+
         .nav-link:hover {
           color: white;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.15);
         }
-        
+
         .logout-btn {
           padding: 8px 20px;
           background: rgba(244, 67, 54, 0.8);
@@ -259,111 +287,121 @@ export default function Translator() {
           cursor: pointer;
           transition: all 0.3s;
         }
-        
+
         .logout-btn:hover {
           background: #f44336;
           transform: translateY(-2px);
         }
-        
+
+        /* Hero Section */
         .translator-hero {
           text-align: center;
-          padding: 60px 20px 30px;
-          position: relative;
-          z-index: 10;
+          padding: 60px 20px 40px;
         }
-        
-        .translator-title {
+
+        .hero-title {
           font-size: 48px;
           font-weight: 800;
           background: linear-gradient(135deg, #fff, #a8b2ff, #667eea);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin-bottom: 15px;
+          margin-bottom: 16px;
         }
-        
-        .translator-subtitle {
+
+        .hero-subtitle {
           font-size: 18px;
           color: rgba(255, 255, 255, 0.7);
         }
-        
+
+        /* Container */
         .translator-container {
           max-width: 1000px;
           margin: 0 auto;
-          padding: 20px;
-          position: relative;
-          z-index: 10;
+          padding: 20px 20px 60px;
         }
-        
-        .translator-tabs {
+
+        /* Tabs */
+        .tabs-container {
           display: flex;
           justify-content: center;
           gap: 15px;
           margin-bottom: 30px;
         }
-        
+
         .tab-btn {
-          padding: 12px 30px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 12px 32px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 50px;
-          color: white;
+          color: rgba(255, 255, 255, 0.7);
           font-size: 16px;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.3s;
         }
-        
+
+        .tab-btn:hover {
+          background: rgba(255, 255, 255, 0.15);
+          color: white;
+          transform: translateY(-2px);
+        }
+
         .tab-btn.active {
           background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white;
           border-color: transparent;
         }
-        
-        .tab-btn:hover {
-          transform: translateY(-2px);
-          background: rgba(255, 255, 255, 0.2);
-        }
-        
+
+        /* Translator Card */
         .translator-card {
-          background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(20px);
+          background: rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(15px);
           border-radius: 32px;
           padding: 40px;
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .language-row {
+
+        /* Language Selection */
+        .language-section {
           display: flex;
-          align-items: center;
+          align-items: flex-end;
           gap: 20px;
           margin-bottom: 30px;
           flex-wrap: wrap;
         }
-        
+
         .language-box {
           flex: 1;
         }
-        
+
         .language-box label {
           display: block;
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(255, 255, 255, 0.7);
           margin-bottom: 10px;
           font-size: 14px;
+          font-weight: 500;
         }
-        
+
         .language-select {
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 16px;
+          transition: all 0.3s;
         }
-        
+
+        .language-select:hover {
+          border-color: rgba(102, 126, 234, 0.5);
+        }
+
         .lang-flag {
           font-size: 28px;
         }
-        
+
         .language-select select {
           flex: 1;
           background: transparent;
@@ -373,10 +411,10 @@ export default function Translator() {
           outline: none;
           cursor: pointer;
         }
-        
+
         .swap-btn {
-          width: 50px;
-          height: 50px;
+          width: 48px;
+          height: 48px;
           background: linear-gradient(135deg, #667eea, #764ba2);
           border: none;
           border-radius: 50%;
@@ -384,75 +422,91 @@ export default function Translator() {
           font-size: 20px;
           cursor: pointer;
           transition: all 0.3s;
-          margin-top: 20px;
+          margin-bottom: 5px;
         }
-        
+
         .swap-btn:hover {
           transform: scale(1.1);
+          box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-        
-        .text-row {
+
+        /* Translation Area */
+        .translation-area {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 20px;
           margin-bottom: 25px;
         }
-        
+
+        .input-area, .output-area {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 20px;
+          padding: 5px;
+        }
+
         .input-textarea {
           width: 100%;
-          padding: 15px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 18px;
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 16px;
           color: white;
           font-size: 16px;
           resize: vertical;
           font-family: inherit;
         }
-        
+
         .input-textarea:focus {
           outline: none;
           border-color: #667eea;
         }
-        
+
         .input-textarea::placeholder {
-          color: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.4);
         }
-        
-        .output-box {
-          padding: 15px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 16px;
-          color: white;
+
+        .char-count {
+          text-align: right;
+          padding: 8px 12px;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .output-text {
+          padding: 18px;
+          min-height: 150px;
+          color: rgba(255, 255, 255, 0.9);
           font-size: 16px;
           line-height: 1.5;
-          min-height: 130px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 16px;
         }
-        
+
         .loading-dots {
           display: flex;
           justify-content: center;
-          gap: 8px;
-          padding: 20px;
+          align-items: center;
+          gap: 10px;
+          height: 150px;
         }
-        
+
         .loading-dots span {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           background: #667eea;
           border-radius: 50%;
-          animation: bounce 1.4s infinite;
+          animation: bounce 1.4s infinite ease-in-out;
         }
-        
+
         .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
         .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-        
+
         @keyframes bounce {
           0%, 80%, 100% { transform: scale(0); }
           40% { transform: scale(1); }
         }
-        
+
+        /* Translate Button */
         .translate-btn {
           width: 100%;
           padding: 14px;
@@ -465,95 +519,140 @@ export default function Translator() {
           cursor: pointer;
           transition: all 0.3s;
         }
-        
+
         .translate-btn:hover {
-          transform: translateY(-3px);
+          transform: translateY(-2px);
           box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
-        
+
+        /* Phrases Card */
         .phrases-card {
-          background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(20px);
+          background: rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(15px);
           border-radius: 32px;
           padding: 40px;
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .phrases-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 15px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 16px;
         }
-        
-        .phrase-item {
+
+        .phrase-card {
           background: rgba(255, 255, 255, 0.05);
           border-radius: 16px;
           padding: 20px;
           cursor: pointer;
           transition: all 0.3s;
+          border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
-        .phrase-item:hover {
+
+        .phrase-card:hover {
           background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-5px);
+          transform: translateY(-3px);
+          border-color: rgba(102, 126, 234, 0.4);
         }
-        
+
         .phrase-english {
           font-size: 18px;
           font-weight: 700;
           color: white;
           margin-bottom: 8px;
         }
-        
+
         .phrase-amharic {
           font-size: 14px;
           color: rgba(255, 255, 255, 0.7);
           margin-bottom: 8px;
         }
-        
+
         .phrase-hint {
           font-size: 11px;
           color: rgba(255, 255, 255, 0.4);
           text-align: right;
         }
-        
+
+        /* Loading State */
+        .loading-container {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top-color: #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+          color: white;
+          font-size: 16px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
           .translator-navbar {
             flex-direction: column;
             padding: 15px 20px;
+            gap: 15px;
           }
-          
+
           .nav-links {
             justify-content: center;
           }
-          
-          .translator-title {
+
+          .hero-title {
             font-size: 32px;
           }
-          
-          .language-row {
-            flex-direction: column;
+
+          .hero-subtitle {
+            font-size: 14px;
           }
-          
+
+          .translator-card {
+            padding: 25px;
+          }
+
+          .language-section {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
           .swap-btn {
+            width: 40px;
+            height: 40px;
             margin: 10px auto;
             transform: rotate(90deg);
           }
-          
+
           .swap-btn:hover {
             transform: rotate(90deg) scale(1.1);
           }
-          
-          .text-row {
+
+          .translation-area {
             grid-template-columns: 1fr;
           }
-          
-          .translator-card {
-            padding: 30px 25px;
+
+          .phrases-grid {
+            grid-template-columns: 1fr;
           }
-          
-          .phrases-card {
-            padding: 30px 25px;
+
+          .tab-btn {
+            padding: 10px 20px;
+            font-size: 14px;
           }
         }
       `}</style>
