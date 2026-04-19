@@ -1,9 +1,6 @@
 /* ============================================ */
 /* TAILWIND CSS - Load first */
 /* ============================================ */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* ============================================ */
 /* YOUR CUSTOM STYLES - These override Tailwind */
